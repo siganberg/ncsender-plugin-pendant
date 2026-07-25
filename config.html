@@ -14,7 +14,7 @@
   .pd-dialog * { box-sizing: border-box; }
   .pd-hidden { display: none !important; }
 
-  /* ---- Status card (AutoDustBoot styling) ---- */
+  /* ---- Status card ---- */
   .pd-status-card {
     display: flex; align-items: center; gap: 16px;
     padding: 16px; border-radius: 16px;
@@ -46,7 +46,7 @@
   .pd-status-badge .pd-pulse { width: 7px; height: 7px; border-radius: 50%; background: currentColor; animation: pd-pulse 2s ease-in-out infinite; }
   @keyframes pd-pulse { 0%,100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(0.9); } }
 
-  /* ---- Activation card ---- */
+  /* ---- Cards ---- */
   .pd-card {
     margin-top: 12px;
     border: 1px solid rgba(255,255,255,0.06);
@@ -64,8 +64,9 @@
   }
   .pd-card-header > svg { color: var(--color-text-secondary, #888); width: 18px; height: 18px; }
   .pd-card-title { flex: 1; }
-  .pd-card-body { padding: 14px 16px; display: flex; flex-direction: column; gap: 12px; }
+  .pd-card-body { padding: 12px 16px; display: flex; flex-direction: column; gap: 12px; }
 
+  /* License pill (firmware header) */
   .pd-license {
     display: inline-flex; align-items: center; gap: 6px;
     padding: 3px 10px; border-radius: 999px;
@@ -88,12 +89,10 @@
     color: var(--color-text-primary, #eee);
   }
   .pd-input:focus { outline: none; border-color: var(--color-accent, #4a90e2); }
-  input[type=file].pd-input { padding: 8px 12px; line-height: 1.4; }
 
-  /* Buttons (AutoDustBoot look; !important beats host global button styling) */
   .pd-btn {
     height: 40px; padding: 0 18px; border-radius: 8px; font-size: 0.86rem; font-weight: 500;
-    cursor: pointer; white-space: nowrap; transition: background .15s, border-color .15s, filter .15s;
+    cursor: pointer; white-space: nowrap; transition: filter .15s, background .15s;
     display: inline-flex; align-items: center; justify-content: center; gap: 6px;
   }
   .pd-btn.sm { height: 32px; padding: 0 13px; font-size: 0.8rem; border-radius: 6px; }
@@ -103,12 +102,13 @@
   .pd-btn-secondary { background: var(--color-surface, rgba(255,255,255,0.04)) !important; border: 1px solid var(--color-border, #ddd) !important; color: var(--color-text-primary, #333) !important; }
   .pd-btn-secondary:hover:not(:disabled) { background: var(--color-surface-muted, rgba(255,255,255,0.08)) !important; }
 
-  .pd-fw-info { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-  .pd-fw-versions { font-size: 0.85rem; color: var(--color-text-secondary, #94a3b8); }
-  .pd-fw-versions b { color: var(--color-text-primary, #e5e7eb); font-weight: 600; font-variant-numeric: tabular-nums; }
-  .pd-fw-actions { display: flex; gap: 8px; flex-wrap: nowrap; }
-  .pd-link { align-self: flex-start; background: none !important; border: none !important; padding: 0 !important; height: auto; cursor: pointer; color: var(--color-accent, #4a90e2) !important; font-size: 0.82rem; font-weight: 500; }
-  .pd-link:hover { text-decoration: underline; }
+  /* Firmware body (mirrors AutoDustBoot) */
+  .pd-fw-info { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 34px; }
+  .pd-fw-status { font-size: 0.9rem; color: var(--color-text-primary, #222); }
+  .pd-fw-status.muted { color: var(--color-text-secondary, #94a3b8); }
+  .pd-fw-status b { font-weight: 600; font-variant-numeric: tabular-nums; }
+  .pd-fw-status .avail { color: var(--color-accent, #4a90e2); }
+  .pd-fw-actions { display: flex; gap: 8px; flex-wrap: nowrap; flex-shrink: 0; }
 
   .pd-progress { height: 6px; border-radius: 3px; background: var(--color-surface-muted, rgba(255,255,255,0.08)); overflow: hidden; }
   .pd-progress > div { height: 100%; width: 0%; background: var(--color-accent, #4a90e2); transition: width .25s ease; }
@@ -144,21 +144,17 @@
     <div id="statusBadge" class="pd-status-badge pd-hidden"><span class="pd-pulse"></span><span id="statusBadgeText"></span></div>
   </div>
 
-  <!-- Activation -->
-  <div class="pd-card">
+  <!-- Activation (only shown when connected & not activated) -->
+  <div id="activationCard" class="pd-card pd-hidden">
     <div class="pd-card-header">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>
       <span class="pd-card-title">Activation</span>
-      <span id="licensePill" class="pd-license pd-license--warn"><span class="pd-license-dot"></span><span id="licenseText">Not activated</span></span>
     </div>
     <div class="pd-card-body">
-      <p id="notConnectedNote" class="pd-hint pd-hidden">Connect the pendant to activate it.</p>
-      <div id="activateBlock" class="pd-hidden" style="display:flex; flex-direction:column; gap:12px;">
-        <p class="pd-hint">Enter the Installation ID that came with your pendant.</p>
-        <div class="pd-row">
-          <input id="installationId" class="pd-input" type="text" placeholder="Installation ID" autocomplete="off">
-          <button id="activateBtn" class="pd-btn pd-btn-primary">Activate</button>
-        </div>
+      <p class="pd-hint">Enter the Installation ID that came with your pendant.</p>
+      <div class="pd-row">
+        <input id="installationId" class="pd-input" type="text" placeholder="Installation ID" autocomplete="off">
+        <button id="activateBtn" class="pd-btn pd-btn-primary">Activate</button>
       </div>
       <div id="activationMsg" class="pd-msg pd-hidden"></div>
     </div>
@@ -169,32 +165,22 @@
     <div class="pd-card-header">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
       <span class="pd-card-title">Firmware Update</span>
+      <span id="licensePill" class="pd-license"><span class="pd-license-dot"></span><span id="licenseText">Checking…</span></span>
     </div>
     <div class="pd-card-body">
-      <div id="fwIdle" style="display:flex; flex-direction:column; gap:12px;">
-        <div class="pd-fw-info">
-          <div class="pd-fw-versions">Current <b id="fwCurrent">—</b><span id="fwLatest"></span></div>
-          <div class="pd-fw-actions">
-            <button id="checkBtn" class="pd-btn pd-btn-secondary sm">Check for updates</button>
-            <button id="updateBtn" class="pd-btn pd-btn-primary sm pd-hidden">Update to <span id="fwUpdateVer"></span></button>
-          </div>
-        </div>
-        <button id="flashToggle" class="pd-link">Flash from file…</button>
-        <div id="flashPanel" class="pd-hidden" style="display:flex; flex-direction:column; gap:10px;">
-          <input id="fwFile" type="file" accept=".bin" class="pd-input">
-          <p id="otaNote" class="pd-hint pd-hidden">Firmware update needs the pendant connected directly by USB cable.</p>
-          <div class="pd-row" style="justify-content:flex-end;">
-            <button id="flashFileBtn" class="pd-btn pd-btn-secondary sm" disabled>Flash file</button>
-          </div>
+      <div id="fwInfoRow" class="pd-fw-info">
+        <div id="fwStatus" class="pd-fw-status muted">Checking…</div>
+        <div class="pd-fw-actions">
+          <button id="checkBtn" class="pd-btn pd-btn-secondary sm pd-hidden">Check for updates</button>
+          <button id="updateBtn" class="pd-btn pd-btn-primary sm pd-hidden">Update</button>
+          <button id="flashFileBtn" class="pd-btn pd-btn-secondary sm">Flash from file…</button>
+          <input id="fwFile" type="file" accept=".bin" style="display:none">
         </div>
       </div>
 
-      <div id="fwProgressBlock" class="pd-hidden" style="display:flex; flex-direction:column; gap:4px;">
+      <div id="fwProgressBlock" class="pd-hidden">
         <div class="pd-progress"><div id="fwBar"></div></div>
-        <div class="pd-progress-label">
-          <span id="fwStatusText">Starting…</span>
-          <button id="fwCancelBtn" class="pd-link">Cancel</button>
-        </div>
+        <div class="pd-progress-label"><span id="fwStatusText">Starting…</span><span id="fwPct">0%</span></div>
       </div>
 
       <div id="fwMsg" class="pd-msg pd-hidden"></div>
@@ -220,7 +206,7 @@
     el.textContent = text; el.className = 'pd-msg ' + (kind || 'error'); show(el, true);
   }
 
-  var state = { connected: false, licensed: false, otaReady: false, version: '', updating: false };
+  var state = { connected: false, licensed: false, otaReady: false, version: '', latest: '', updateAvail: false, updating: false };
   var statusTimer = null;
 
   async function loadStatus() {
@@ -233,38 +219,52 @@
       state.licensed = !!(usb && usb.licensed);
       state.otaReady = !!d.otaReady;
       state.version = usb && usb.version ? usb.version : '';
-      renderStatus(d);
+      state.kind = d.activeConnectionType === 'espnow' ? 'Wireless' : 'USB';
+      render();
     } catch (e) { /* transient */ }
   }
 
-  function renderStatus(d) {
-    var card = $('statusCard'), title = $('statusTitle'), sub = $('statusSub'),
-        badge = $('statusBadge'), badgeText = $('statusBadgeText');
+  function render() {
+    var card = $('statusCard'), badge = $('statusBadge');
     if (state.connected) {
-      var kind = d.activeConnectionType === 'espnow' ? 'Wireless' : 'USB';
       card.className = 'pd-status-card connected';
-      title.textContent = 'Pendant connected';
-      sub.textContent = kind + (state.version ? ' · v' + state.version : '');
-      badgeText.textContent = kind; show(badge, true);
+      $('statusTitle').textContent = 'Pendant connected';
+      $('statusSub').textContent = state.kind + (state.version ? ' · v' + state.version : '');
+      $('statusBadgeText').textContent = state.kind; show(badge, true);
     } else {
       card.className = 'pd-status-card';
-      title.textContent = 'Pendant not connected';
-      sub.textContent = 'Plug in the pendant or pair it in the Wireless USB dialog';
+      $('statusTitle').textContent = 'Pendant not connected';
+      $('statusSub').textContent = 'Plug in the pendant or pair it in the Wireless USB dialog';
       show(badge, false);
     }
 
-    // License pill in the Activation header
+    // License pill (firmware header)
     var pill = $('licensePill'), pillText = $('licenseText');
     if (!state.connected) { pill.className = 'pd-license'; pillText.textContent = 'No pendant'; }
     else if (state.licensed) { pill.className = 'pd-license pd-license--ok'; pillText.textContent = 'Activated'; }
     else { pill.className = 'pd-license pd-license--warn'; pillText.textContent = 'Not activated'; }
 
-    show($('notConnectedNote'), !state.connected);
-    show($('activateBlock'), state.connected && !state.licensed);
-    $('fwCurrent').textContent = state.version || '—';
-    show($('otaNote'), state.connected && !state.otaReady);
+    // Activation card only when there's something to do
+    show($('activationCard'), state.connected && !state.licensed);
+
+    // Firmware status line + actions
+    if (state.updating) return; // don't disturb progress view
+    var fw = $('fwStatus');
+    show($('checkBtn'), state.connected);
+    show($('updateBtn'), state.connected && state.updateAvail);
+    if (!state.connected) {
+      fw.className = 'pd-fw-status muted';
+      fw.textContent = 'Connect the pendant to check for updates.';
+    } else if (state.updateAvail && state.latest) {
+      fw.className = 'pd-fw-status';
+      fw.innerHTML = 'Current <b>v' + state.version + '</b> · <span class="avail">v' + state.latest + ' available</span>';
+    } else {
+      fw.className = 'pd-fw-status';
+      fw.innerHTML = 'Current <b>v' + (state.version || '—') + '</b>' + (state.checked ? ' · up to date' : '');
+    }
   }
 
+  // ---- Activation ----
   $('activateBtn').addEventListener('click', async function () {
     var id = $('installationId').value.trim();
     if (!id) return;
@@ -277,12 +277,13 @@
       });
       if (!r.ok) { var e = await r.json().catch(function(){return{};}); throw new Error(e.error || e.message || ('Activation failed (HTTP ' + r.status + ')')); }
       $('installationId').value = '';
-      setMsg($('activationMsg'), 'Pendant activated.', 'success');
       await loadStatus();
     } catch (e) { setMsg($('activationMsg'), e.message || 'Activation failed', 'error'); }
     finally { btn.disabled = false; btn.textContent = 'Activate'; }
   });
+  $('installationId').addEventListener('keyup', function (e) { if (e.key === 'Enter') $('activateBtn').click(); });
 
+  // ---- Firmware ----
   $('checkBtn').addEventListener('click', async function () {
     var btn = $('checkBtn');
     btn.disabled = true; btn.textContent = 'Checking…'; setMsg($('fwMsg'), '');
@@ -290,40 +291,30 @@
       var r = await fetch(BASE_URL + '/api/pendant/firmware/check');
       if (!r.ok) { var e = await r.json().catch(function(){return{};}); throw new Error(e.error || 'Check failed'); }
       var info = await r.json();
-      $('fwCurrent').textContent = info.currentVersion || state.version || '—';
-      if (info.updateAvailable && info.latestVersion) {
-        $('fwLatest').textContent = ' · latest v' + info.latestVersion;
-        $('fwUpdateVer').textContent = 'v' + info.latestVersion;
-        show($('updateBtn'), true);
-      } else {
-        $('fwLatest').textContent = ' · up to date';
-        show($('updateBtn'), false);
-      }
+      state.checked = true;
+      state.updateAvail = !!(info.updateAvailable && info.latestVersion);
+      state.latest = info.latestVersion || '';
+      render();
     } catch (e) { setMsg($('fwMsg'), e.message || 'Could not check for updates', 'error'); }
     finally { btn.disabled = false; btn.textContent = 'Check for updates'; }
   });
 
   $('updateBtn').addEventListener('click', function () { runFirmware('/api/pendant/firmware/update', null); });
-  $('flashToggle').addEventListener('click', function () { $('flashPanel').classList.toggle('pd-hidden'); });
-  $('fwFile').addEventListener('change', function () { $('flashFileBtn').disabled = !($('fwFile').files && $('fwFile').files[0]); });
-  $('flashFileBtn').addEventListener('click', async function () {
+  $('flashFileBtn').addEventListener('click', function () { $('fwFile').click(); });
+  $('fwFile').addEventListener('change', async function () {
     var f = $('fwFile').files && $('fwFile').files[0];
+    $('fwFile').value = '';
     if (!f) return;
     var buf = await f.arrayBuffer();
     runFirmware('/api/pendant/firmware/flash-file', buf);
   });
-  $('fwCancelBtn').addEventListener('click', async function () {
-    try { await fetch(BASE_URL + '/api/pendant/firmware/cancel', { method: 'POST' }); } catch (e) {}
-    endFirmware();
-    setMsg($('fwMsg'), 'Firmware update cancelled', 'error');
-  });
 
   function beginFirmware() {
     state.updating = true;
-    show($('fwIdle'), false); show($('fwProgressBlock'), true);
-    $('fwBar').style.width = '0%'; $('fwStatusText').textContent = 'Starting…'; setMsg($('fwMsg'), '');
+    show($('fwInfoRow'), false); show($('fwProgressBlock'), true);
+    $('fwBar').style.width = '0%'; $('fwPct').textContent = '0%'; $('fwStatusText').textContent = 'Starting…'; setMsg($('fwMsg'), '');
   }
-  function endFirmware() { state.updating = false; show($('fwProgressBlock'), false); show($('fwIdle'), true); }
+  function endFirmware() { state.updating = false; show($('fwProgressBlock'), false); show($('fwInfoRow'), true); render(); }
 
   async function runFirmware(path, body) {
     beginFirmware();
@@ -343,12 +334,13 @@
           if (lines[i].indexOf('data: ') !== 0) continue;
           var ev; try { ev = JSON.parse(lines[i].substring(6)); } catch (e) { continue; }
           if (ev.type === 'progress') {
-            $('fwBar').style.width = (ev.percent || 0) + '%';
+            var pct = ev.percent || 0;
+            $('fwBar').style.width = pct + '%'; $('fwPct').textContent = pct + '%';
             $('fwStatusText').textContent = ev.status || 'Flashing firmware…';
           } else if (ev.type === 'complete') {
-            $('fwBar').style.width = '100%'; endFirmware();
+            $('fwBar').style.width = '100%'; $('fwPct').textContent = '100%';
+            state.updateAvail = false; endFirmware();
             setMsg($('fwMsg'), 'Firmware updated' + (ev.version ? ' to v' + ev.version : '') + '. The pendant is rebooting.', 'success');
-            show($('updateBtn'), false);
             return;
           } else if (ev.type === 'error') { throw new Error(ev.message || 'Firmware update failed'); }
         }
@@ -357,7 +349,6 @@
     } catch (e) { endFirmware(); setMsg($('fwMsg'), e.message || 'Firmware update failed', 'error'); }
   }
 
-  $('installationId').addEventListener('keyup', function (e) { if (e.key === 'Enter') $('activateBtn').click(); });
   loadStatus();
   statusTimer = setInterval(function () { if (!state.updating) loadStatus(); }, 3000);
   window.addEventListener('beforeunload', function () { if (statusTimer) clearInterval(statusTimer); });

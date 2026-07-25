@@ -13,10 +13,12 @@
   }
   * { box-sizing: border-box; }
   body {
-    margin: 0; padding: 18px; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     color: #e6e6e6; background: transparent; font-size: 14px;
   }
-  .content { display: flex; flex-direction: column; gap: 16px; }
+  /* Padding lives on the wrapper, not body — the host injects this HTML into a
+     div, so body-level padding is dropped. */
+  .content { display: flex; flex-direction: column; gap: 16px; padding: 20px; }
   .section { display: flex; flex-direction: column; gap: 10px; }
   .section__title { font-weight: 600; font-size: 0.92rem; }
   .hint { font-size: 0.82rem; opacity: 0.72; margin: 0; }

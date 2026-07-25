@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<style>
+  :root {
+    --accent: #1abc9c;
+    --green: #28a745;
+    --amber: #d9a406;
+    --red: #dc3545;
+    --panel: rgba(128,128,128,0.08);
+    --panel-border: rgba(128,128,128,0.18);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 18px; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    color: #e6e6e6; background: transparent; font-size: 14px;
+  }
+  .content { display: flex; flex-direction: column; gap: 16px; }
+  .section { display: flex; flex-direction: column; gap: 10px; }
+  .section__title { font-weight: 600; font-size: 0.92rem; }
+  .hint { font-size: 0.82rem; opacity: 0.72; margin: 0; }
+
+  .status-card {
+    display: flex; align-items: center; gap: 14px; padding: 14px 16px;
+    background: var(--panel); border: 1px solid var(--panel-border); border-radius: 10px;
+  }
+  .status-card.ok { border-color: rgba(40,167,69,0.4); background: rgba(40,167,69,0.08); }
+  .status-card.off { opacity: 0.85; }
+  .status-title { font-weight: 600; }
+  .status-sub { font-size: 0.8rem; opacity: 0.72; margin-top: 2px; }
+  .badge { margin-left: auto; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; }
+  .badge.green { color: var(--green); }
+  .badge.gray { color: #888; }
+
+  .row { display: flex; gap: 8px; align-items: center; }
+  .col { display: flex; flex-direction: column; gap: 10px; }
+  .actions { display: flex; justify-content: flex-end; gap: 8px; }
+
+  label.field { font-size: 0.78rem; opacity: 0.75; }
+  input.text, select.text {
+    width: 100%; padding: 10px 12px; border-radius: 8px; font-size: 0.9rem; letter-spacing: 0.02em;
+    background: rgba(128,128,128,0.1); border: 1px solid rgba(128,128,128,0.25); color: inherit;
+  }
+  input.text:focus, select.text:focus { outline: none; border-color: var(--accent); }
+  input.text[readonly] { opacity: 0.7; }
+
+  .btn {
+    padding: 8px 14px; border-radius: 8px; font-size: 0.85rem; font-weight: 600;
+    border: 1px solid transparent; cursor: pointer; color: inherit; background: transparent;
+  }
+  .btn:disabled { opacity: 0.5; cursor: default; }
+  .btn.primary { background: var(--accent); color: #fff; }
+  .btn.ghost { border-color: rgba(128,128,128,0.35); }
+  .btn.ghost:hover:not(:disabled) { border-color: var(--accent); }
+  .btn.danger { border-color: rgba(220,53,69,0.5); color: var(--red); }
+  .btn.danger:hover:not(:disabled) { background: rgba(220,53,69,0.1); }
+
+  .msg { font-size: 0.82rem; padding: 8px 10px; border-radius: 6px; }
+  .msg.error { color: var(--red); background: rgba(220,53,69,0.1); }
+  .msg.success { color: var(--green); background: rgba(40,167,69,0.1); }
+  .hidden { display: none !important; }
+
+  .progress { height: 8px; border-radius: 5px; background: rgba(128,128,128,0.2); overflow: hidden; }
+  .progress > div { height: 100%; width: 0%; background: var(--accent); transition: width 0.2s ease; }
+  .fw-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .fw-name { font-weight: 600; }
+  .fw-desc { font-size: 0.8rem; opacity: 0.72; }
+  .divider { height: 1px; background: var(--panel-border); }
+</style>
+</head>
+<body>
+<div class="content">
+
+  <!-- Connection status -->
+  <div id="statusCard" class="status-card off">
+    <div class="status-card__content" style="flex:1; min-width:0;">
+      <div class="status-title" id="statusTitle">Checking…</div>
+      <div class="status-sub" id="statusSub"></div>
+    </div>
+    <div class="badge gray" id="statusBadge"></div>
+  </div>
+
+  <!-- Activation -->
+  <div class="section" id="activationSection">
+    <div class="section__title">Activation</div>
+    <div id="notConnectedNote" class="hint hidden">Connect the pendant to activate or update it.</div>
+
+    <div id="activateBlock" class="col hidden">
+      <p class="hint">Enter the Installation ID that came with your pendant to activate it.</p>
+      <input id="installationId" class="text" type="text" placeholder="Installation ID" autocomplete="off">
+      <div class="actions">
+        <button id="activateBtn" class="btn primary">Activate</button>
+      </div>
+    </div>
+
+    <div id="licensedBlock" class="col hidden">
+      <div class="row"><span class="badge green">Licensed</span></div>
+      <div class="actions">
+        <button id="deactivateBtn" class="btn danger">Deactivate</button>
+      </div>
+    </div>
+
+    <div id="activationMsg" class="msg hidden"></div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- Firmware -->
+  <div class="section" id="firmwareSection">
+    <div class="section__title">Firmware</div>
+
+    <div id="fwIdle" class="col">
+      <div class="fw-row">
+        <div>
+          <div class="fw-name">Current version: <span id="fwCurrent">—</span></div>
+          <div class="fw-desc" id="fwLatest"></div>
+        </div>
+        <button id="checkBtn" class="btn ghost">Check for updates</button>
+      </div>
+
+      <div id="fwUpdateAvail" class="hidden col">
+        <button id="updateBtn" class="btn primary">Update to <span id="fwUpdateVer"></span></button>
+      </div>
+
+      <details id="fwAdvanced">
+        <summary class="hint" style="cursor:pointer;">Flash from file</summary>
+        <div class="col" style="margin-top:8px;">
+          <input id="fwFile" type="file" accept=".bin" class="text">
+          <div class="actions">
+            <button id="flashFileBtn" class="btn ghost" disabled>Flash selected file</button>
+          </div>
+          <p id="otaNote" class="hint hidden">Firmware update needs the pendant connected directly by USB cable.</p>
+        </div>
+      </details>
+    </div>
+
+    <div id="fwProgressBlock" class="col hidden">
+      <div class="fw-desc" id="fwStatusText">Starting…</div>
+      <div class="progress"><div id="fwBar"></div></div>
+      <div class="actions">
+        <button id="fwCancelBtn" class="btn danger">Cancel</button>
+      </div>
+    </div>
+
+    <div id="fwMsg" class="msg hidden"></div>
+  </div>
+
+</div>
+
+<script>
+(function () {
+  var FALLBACK_PORT = __SERVER_PORT__;
+  var BASE_URL = (function () {
+    if (window.ncSender && typeof window.ncSender.getApiBaseUrl === 'function') {
+      return window.ncSender.getApiBaseUrl(FALLBACK_PORT);
+    }
+    return '';
+  })();
+
+  var $ = function (id) { return document.getElementById(id); };
+  function show(el, on) { el.classList[on ? 'remove' : 'add']('hidden'); }
+  function setMsg(el, text, kind) {
+    if (!text) { show(el, false); return; }
+    el.textContent = text; el.className = 'msg ' + (kind || 'error'); show(el, true);
+  }
+
+  var state = { connected: false, licensed: false, otaReady: false, version: '', updating: false };
+  var statusTimer = null;
+
+  // ---------- Status ----------
+  async function loadStatus() {
+    try {
+      var r = await fetch(BASE_URL + '/api/pendant/status');
+      if (!r.ok) return;
+      var d = await r.json();
+      var usb = d.usbPendant;
+      state.connected = !!usb;
+      state.licensed = !!(usb && usb.licensed);
+      state.otaReady = !!d.otaReady;
+      state.version = usb && usb.version ? usb.version : '';
+      renderStatus(d);
+    } catch (e) { /* transient */ }
+  }
+
+  function renderStatus(d) {
+    var card = $('statusCard'), title = $('statusTitle'), sub = $('statusSub'), badge = $('statusBadge');
+    if (state.connected) {
+      var kind = d.activeConnectionType === 'espnow' ? 'Wireless' : 'USB';
+      card.className = 'status-card ok';
+      title.textContent = 'Pendant connected';
+      sub.textContent = kind + (state.version ? ' · v' + state.version : '');
+      badge.className = 'badge green'; badge.textContent = kind;
+    } else {
+      card.className = 'status-card off';
+      title.textContent = 'Pendant not connected';
+      sub.textContent = 'Plug in the pendant or pair it via the Wireless USB dialog';
+      badge.className = 'badge gray'; badge.textContent = '';
+    }
+
+    // Activation blocks
+    show($('notConnectedNote'), !state.connected);
+    show($('activateBlock'), state.connected && !state.licensed);
+    show($('licensedBlock'), state.connected && state.licensed);
+
+    // Firmware current version + OTA availability
+    $('fwCurrent').textContent = state.version || '—';
+    show($('otaNote'), state.connected && !state.otaReady);
+  }
+
+  // ---------- Activation ----------
+  $('activateBtn').addEventListener('click', async function () {
+    var id = $('installationId').value.trim();
+    if (!id) return;
+    var btn = $('activateBtn');
+    btn.disabled = true; btn.textContent = 'Activating…'; setMsg($('activationMsg'), '');
+    try {
+      var r = await fetch(BASE_URL + '/api/pendant/activate-usb', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ installationId: id })
+      });
+      if (!r.ok) {
+        var err = await r.json().catch(function () { return {}; });
+        throw new Error(err.error || err.message || ('Activation failed (HTTP ' + r.status + ')'));
+      }
+      $('installationId').value = '';
+      setMsg($('activationMsg'), 'Pendant activated.', 'success');
+      await loadStatus();
+    } catch (e) {
+      setMsg($('activationMsg'), e.message || 'Activation failed', 'error');
+    } finally {
+      btn.disabled = false; btn.textContent = 'Activate';
+    }
+  });
+
+  $('deactivateBtn').addEventListener('click', async function () {
+    var btn = $('deactivateBtn');
+    btn.disabled = true; btn.textContent = 'Deactivating…'; setMsg($('activationMsg'), '');
+    try {
+      var r = await fetch(BASE_URL + '/api/pendant/deactivate-usb', { method: 'POST' });
+      if (!r.ok) {
+        var err = await r.json().catch(function () { return {}; });
+        throw new Error(err.error || err.message || 'Deactivation failed');
+      }
+      await loadStatus();
+    } catch (e) {
+      setMsg($('activationMsg'), e.message || 'Deactivation failed', 'error');
+    } finally {
+      btn.disabled = false; btn.textContent = 'Deactivate';
+    }
+  });
+
+  // ---------- Firmware ----------
+  $('checkBtn').addEventListener('click', async function () {
+    var btn = $('checkBtn');
+    btn.disabled = true; btn.textContent = 'Checking…'; setMsg($('fwMsg'), '');
+    try {
+      var r = await fetch(BASE_URL + '/api/pendant/firmware/check');
+      if (!r.ok) { var err = await r.json().catch(function () { return {}; }); throw new Error(err.error || 'Check failed'); }
+      var info = await r.json();
+      $('fwCurrent').textContent = info.currentVersion || state.version || '—';
+      if (info.updateAvailable && info.latestVersion) {
+        $('fwLatest').textContent = 'Latest: v' + info.latestVersion;
+        $('fwUpdateVer').textContent = 'v' + info.latestVersion;
+        show($('fwUpdateAvail'), true);
+      } else {
+        $('fwLatest').textContent = 'Up to date';
+        show($('fwUpdateAvail'), false);
+      }
+    } catch (e) {
+      setMsg($('fwMsg'), e.message || 'Could not check for updates', 'error');
+    } finally {
+      btn.disabled = false; btn.textContent = 'Check for updates';
+    }
+  });
+
+  $('updateBtn').addEventListener('click', function () { runFirmware('/api/pendant/firmware/update', null); });
+
+  $('fwFile').addEventListener('change', function () {
+    $('flashFileBtn').disabled = !($('fwFile').files && $('fwFile').files[0]);
+  });
+  $('flashFileBtn').addEventListener('click', async function () {
+    var f = $('fwFile').files && $('fwFile').files[0];
+    if (!f) return;
+    var buf = await f.arrayBuffer();
+    runFirmware('/api/pendant/firmware/flash-file', buf);
+  });
+
+  $('fwCancelBtn').addEventListener('click', async function () {
+    try { await fetch(BASE_URL + '/api/pendant/firmware/cancel', { method: 'POST' }); } catch (e) {}
+    endFirmware();
+    setMsg($('fwMsg'), 'Firmware update cancelled', 'error');
+  });
+
+  function beginFirmware() {
+    state.updating = true;
+    show($('fwIdle'), false); show($('fwProgressBlock'), true);
+    $('fwBar').style.width = '0%'; $('fwStatusText').textContent = 'Starting…'; setMsg($('fwMsg'), '');
+  }
+  function endFirmware() {
+    state.updating = false;
+    show($('fwProgressBlock'), false); show($('fwIdle'), true);
+  }
+
+  // Streams the SSE ("data: {json}") response and drives the progress bar. `body`
+  // null => JSON update endpoint; ArrayBuffer => binary flash-file endpoint.
+  async function runFirmware(path, body) {
+    beginFirmware();
+    try {
+      var opts = body
+        ? { method: 'POST', headers: { 'Content-Type': 'application/octet-stream' }, body: body }
+        : { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' };
+      var r = await fetch(BASE_URL + path, opts);
+      if (!r.ok || !r.body) {
+        var err = await r.json().catch(function () { return {}; });
+        throw new Error(err.error || 'Firmware update failed');
+      }
+      var reader = r.body.getReader();
+      var decoder = new TextDecoder();
+      var buffer = '';
+      while (true) {
+        var chunk = await reader.read();
+        if (chunk.done) break;
+        buffer += decoder.decode(chunk.value, { stream: true });
+        var lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+        for (var i = 0; i < lines.length; i++) {
+          var line = lines[i];
+          if (line.indexOf('data: ') !== 0) continue;
+          var ev;
+          try { ev = JSON.parse(line.substring(6)); } catch (e) { continue; }
+          if (ev.type === 'progress') {
+            $('fwBar').style.width = (ev.percent || 0) + '%';
+            $('fwStatusText').textContent = ev.status || 'Flashing firmware…';
+          } else if (ev.type === 'complete') {
+            $('fwBar').style.width = '100%';
+            endFirmware();
+            setMsg($('fwMsg'), 'Firmware updated' + (ev.version ? ' to v' + ev.version : '') + '. The pendant is rebooting.', 'success');
+            show($('fwUpdateAvail'), false);
+            return;
+          } else if (ev.type === 'error') {
+            throw new Error(ev.message || 'Firmware update failed');
+          }
+        }
+      }
+      endFirmware();
+    } catch (e) {
+      endFirmware();
+      setMsg($('fwMsg'), e.message || 'Firmware update failed', 'error');
+    }
+  }
+
+  // ---------- Init ----------
+  $('installationId').addEventListener('keyup', function (e) { if (e.key === 'Enter') $('activateBtn').click(); });
+  loadStatus();
+  statusTimer = setInterval(function () { if (!state.updating) loadStatus(); }, 3000);
+  window.addEventListener('beforeunload', function () { if (statusTimer) clearInterval(statusTimer); });
+})();
+</script>
+</body>
+</html>

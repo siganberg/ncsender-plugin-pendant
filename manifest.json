@@ -1,0 +1,22 @@
+{
+  "id": "com.ncsender.pendant",
+  "name": "Pendant",
+  "version": "0.1.0",
+  "minAppVersion": "0.3.111",
+  "author": "FrancisCreation",
+  "description": "Wireless pendant activation and firmware updates. Pairing lives in the core Wireless USB dialog.",
+  "entry": "index.js",
+  "configUi": "config.html",
+  "icon": "icon.png",
+  "category": "utility",
+  "repository": "https://github.com/siganberg/ncsender-plugin-pendant",
+  "priority": 10,
+  "platforms": {
+    "v1": "0.3.19",
+    "pro-v1": "0.3.19",
+    "pro-v2": "2.0.0"
+  },
+  "toolMenu": [
+    { "id": "open-config", "label": "Pendant", "icon": "icon.png", "clientOnly": true }
+  ]
+}

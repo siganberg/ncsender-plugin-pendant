@@ -26,7 +26,7 @@ export async function onLoad(ctx) {
     let html = readFileSync(join(__dirname, 'config.html'), 'utf-8');
     html = html.replace('__SERVER_PORT__', String(serverPort));
 
-    ctx.showDialog('Pendant', html, { closable: true, width: '560px' });
+    ctx.showDialog('Pendant', html, { closable: true, width: '620px' });
   }, { icon: 'icon.png' });
 }
 

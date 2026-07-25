@@ -99,8 +99,8 @@
   .pd-btn:disabled { opacity: 0.5; cursor: not-allowed; }
   .pd-btn-primary { background: var(--color-accent, #4a90e2) !important; border: 1px solid var(--color-accent, #4a90e2) !important; color: #fff !important; }
   .pd-btn-primary:hover:not(:disabled) { filter: brightness(1.08); }
-  .pd-btn-secondary { background: var(--color-surface, rgba(255,255,255,0.04)) !important; border: 1px solid var(--color-border, #ddd) !important; color: var(--color-text-primary, #333) !important; }
-  .pd-btn-secondary:hover:not(:disabled) { background: var(--color-surface-muted, rgba(255,255,255,0.08)) !important; }
+  .pd-btn-secondary { background: var(--color-accent, #4a90e2) !important; border: 1px solid var(--color-accent, #4a90e2) !important; color: #fff !important; }
+  .pd-btn-secondary:hover:not(:disabled) { filter: brightness(1.08); }
 
   /* Firmware body (mirrors AutoDustBoot) */
   .pd-fw-info { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 34px; }
@@ -250,7 +250,8 @@
     // Firmware status line + actions
     if (state.updating) return; // don't disturb progress view
     var fw = $('fwStatus');
-    show($('checkBtn'), state.connected);
+    // Once an update is available, the Update button replaces Check for updates.
+    show($('checkBtn'), state.connected && !state.updateAvail);
     show($('updateBtn'), state.connected && state.updateAvail);
     if (!state.connected) {
       fw.className = 'pd-fw-status muted';

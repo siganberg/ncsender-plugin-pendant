@@ -3,167 +3,203 @@
 <head>
 <meta charset="utf-8">
 <style>
-  :root {
-    --accent: #3b82f6;
-    --accent-hover: #2f6fe0;
-    --green: #22c55e;
-    --amber: #d9a406;
-    --red: #ef4444;
-    --panel: rgba(148,163,184,0.06);
-    --panel-border: rgba(148,163,184,0.16);
-    --text: #e8eaed;
-    --muted: rgba(232,234,237,0.6);
-    --field-h: 40px;
+  .pd-dialog {
+    padding: 18px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    color: var(--color-text-primary, #e5e7eb);
+    width: 600px;
+    box-sizing: border-box;
+    overflow-x: hidden;
   }
-  * { box-sizing: border-box; }
-  body {
-    margin: 0; padding: 0; color: var(--text); background: transparent; font-size: 14px;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  .pd-dialog * { box-sizing: border-box; }
+  .pd-hidden { display: none !important; }
+
+  /* ---- Status card (AutoDustBoot styling) ---- */
+  .pd-status-card {
+    display: flex; align-items: center; gap: 16px;
+    padding: 16px; border-radius: 16px;
+    border: 1px solid rgba(255,255,255,0.06);
+    background: linear-gradient(135deg, rgba(100,100,100,0.10) 0%, rgba(80,80,80,0.05) 100%);
+    color: var(--color-text-primary, #222);
   }
-  .content { display: flex; flex-direction: column; gap: 20px; padding: 22px; min-width: 540px; }
-
-  /* ---- Status ---- */
-  .status-card {
-    display: flex; align-items: center; gap: 12px; padding: 14px 16px;
-    background: var(--panel); border: 1px solid var(--panel-border); border-radius: 12px;
+  .pd-status-card.connected {
+    background: linear-gradient(135deg, rgba(34,197,94,0.15) 0%, rgba(34,197,94,0.05) 100%);
+    border-color: rgba(34,197,94,0.2);
   }
-  .status-card.ok { border-color: rgba(34,197,94,0.35); background: rgba(34,197,94,0.07); }
-  .status-dot { width: 10px; height: 10px; border-radius: 50%; background: #6b7280; flex: none; }
-  .status-card.ok .status-dot { background: var(--green); box-shadow: 0 0 0 4px rgba(34,197,94,0.15); }
-  .status-main { flex: 1; min-width: 0; }
-  .status-title { font-weight: 600; }
-  .status-sub { font-size: 0.8rem; color: var(--muted); margin-top: 2px; }
-  .status-badge { font-size: 0.68rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
-  .status-card.ok .status-badge { color: var(--green); }
-
-  /* ---- Sections ---- */
-  .block { display: flex; flex-direction: column; gap: 12px; }
-  .block + .block { padding-top: 20px; border-top: 1px solid var(--panel-border); }
-  .block-title { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
-  .hint { font-size: 0.82rem; color: var(--muted); margin: 0; line-height: 1.45; }
-
-  /* ---- Fields + buttons (aligned heights) ---- */
-  .row { display: flex; gap: 8px; align-items: center; }
-  .row.end { justify-content: flex-end; }
-  .text {
-    flex: 1; height: var(--field-h); padding: 0 13px; border-radius: 9px; font-size: 0.9rem; letter-spacing: 0.02em;
-    background: rgba(148,163,184,0.10); border: 1px solid var(--panel-border); color: inherit;
+  .pd-status-icon {
+    display: flex; align-items: center; justify-content: center;
+    width: 52px; height: 52px; border-radius: 12px;
+    background: rgba(255,255,255,0.05); flex-shrink: 0;
   }
-  .text:focus { outline: none; border-color: var(--accent); background: rgba(148,163,184,0.14); }
-  input[type=file].text { padding: 8px 12px; line-height: 1.4; }
-
-  .btn {
-    height: var(--field-h); padding: 0 18px; border-radius: 9px; font-size: 0.86rem; font-weight: 600;
-    border: 1px solid transparent; cursor: pointer; color: inherit; background: transparent; white-space: nowrap;
-    display: inline-flex; align-items: center; justify-content: center; gap: 6px; transition: background .15s, border-color .15s, opacity .15s;
+  .pd-status-icon svg { width: 30px; height: 30px; }
+  .pd-status-body { flex: 1; min-width: 0; }
+  .pd-status-title { font-weight: 600; font-size: 1.05rem; color: var(--color-text-primary, #222); margin-bottom: 2px; }
+  .pd-status-card.connected .pd-status-title { color: #22c55e; }
+  .pd-status-sub { font-size: 0.82rem; color: var(--color-text-secondary, #94a3b8); }
+  .pd-status-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 5px 12px; border-radius: 999px;
+    background: rgba(148,163,184,0.15); color: var(--color-text-secondary, #94a3b8);
+    font-size: 0.78rem; font-weight: 500; flex-shrink: 0;
   }
-  .btn:disabled { opacity: 0.45; cursor: default; }
-  .btn.sm { height: 34px; padding: 0 13px; font-size: 0.8rem; border-radius: 8px; }
-  .btn.full { width: 100%; }
-  /* !important so the host dialog's global button styling can't repaint our
-     secondary buttons solid blue. */
-  .btn.primary { background: var(--accent) !important; color: #fff !important; border-color: var(--accent) !important; }
-  .btn.primary:hover:not(:disabled) { background: var(--accent-hover) !important; }
-  .btn.ghost { background: transparent !important; border-color: var(--panel-border) !important; color: var(--text) !important; }
-  .btn.ghost:hover:not(:disabled) { border-color: var(--accent) !important; }
-  .btn.danger { background: transparent !important; border-color: rgba(239,68,68,0.5) !important; color: var(--red) !important; }
-  .btn.danger:hover:not(:disabled) { background: rgba(239,68,68,0.12) !important; }
+  .pd-status-card.connected .pd-status-badge { background: rgba(34,197,94,0.15); color: #22c55e; }
+  .pd-status-badge .pd-pulse { width: 7px; height: 7px; border-radius: 50%; background: currentColor; animation: pd-pulse 2s ease-in-out infinite; }
+  @keyframes pd-pulse { 0%,100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(0.9); } }
 
-  .link-btn {
-    align-self: flex-start; background: none !important; border: none !important; padding: 0 !important; cursor: pointer;
-    color: var(--accent) !important; font-size: 0.82rem; font-weight: 500; height: auto;
+  /* ---- Activation card ---- */
+  .pd-card {
+    margin-top: 12px;
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 16px;
+    background: rgba(255,255,255,0.02);
+    overflow: hidden;
   }
-  .link-btn:hover { text-decoration: underline; }
+  .pd-card-header {
+    display: flex; align-items: center; gap: 10px;
+    padding: 12px 16px;
+    background: rgba(255,255,255,0.03);
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    font-weight: 500; font-size: 0.95rem;
+    color: var(--color-text-primary, #222);
+  }
+  .pd-card-header > svg { color: var(--color-text-secondary, #888); width: 18px; height: 18px; }
+  .pd-card-title { flex: 1; }
+  .pd-card-body { padding: 14px 16px; display: flex; flex-direction: column; gap: 12px; }
 
-  .pill { display: inline-flex; align-items: center; gap: 5px; padding: 5px 12px; border-radius: 999px; font-size: 0.74rem; font-weight: 700; }
-  .pill.green { color: var(--green); background: rgba(34,197,94,0.12); }
+  .pd-license {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 3px 10px; border-radius: 999px;
+    font-size: 0.72rem; font-weight: 600; letter-spacing: 0.02em;
+    background: color-mix(in srgb, #9ca3af 15%, transparent);
+    color: var(--color-text-secondary, #888);
+  }
+  .pd-license-dot { width: 8px; height: 8px; border-radius: 50%; background: #9ca3af; flex: 0 0 auto; }
+  .pd-license--ok { background: color-mix(in srgb, #22c55e 15%, transparent); color: #22c55e; }
+  .pd-license--ok .pd-license-dot { background: #22c55e; box-shadow: 0 0 0 3px rgba(34,197,94,0.18); }
+  .pd-license--warn { background: color-mix(in srgb, #f59e0b 15%, transparent); color: #f59e0b; }
+  .pd-license--warn .pd-license-dot { background: #f59e0b; box-shadow: 0 0 0 3px rgba(245,158,11,0.18); }
 
-  .licensed-row { display: flex; align-items: center; justify-content: space-between; }
+  .pd-hint { font-size: 0.85rem; color: var(--color-text-secondary, #666); margin: 0; line-height: 1.45; }
+  .pd-row { display: flex; gap: 8px; align-items: center; }
+  .pd-input {
+    flex: 1; height: 40px; padding: 0 13px; border-radius: 8px; font-size: 0.9rem; letter-spacing: 0.02em;
+    background: var(--color-surface-muted, rgba(255,255,255,0.04));
+    border: 1px solid var(--color-border, rgba(255,255,255,0.1));
+    color: var(--color-text-primary, #eee);
+  }
+  .pd-input:focus { outline: none; border-color: var(--color-accent, #4a90e2); }
+  input[type=file].pd-input { padding: 8px 12px; line-height: 1.4; }
 
-  /* ---- Firmware ---- */
-  .fw-head { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
-  .fw-current { font-size: 0.9rem; }
-  .fw-current b { font-weight: 700; }
-  .fw-latest { font-size: 0.78rem; color: var(--muted); margin-top: 2px; }
-  .flash-panel { display: flex; flex-direction: column; gap: 10px; padding-top: 4px; }
-  .progress { height: 8px; border-radius: 6px; background: rgba(148,163,184,0.18); overflow: hidden; }
-  .progress > div { height: 100%; width: 0%; background: var(--accent); transition: width .2s ease; }
+  /* Buttons (AutoDustBoot look; !important beats host global button styling) */
+  .pd-btn {
+    height: 40px; padding: 0 18px; border-radius: 8px; font-size: 0.86rem; font-weight: 500;
+    cursor: pointer; white-space: nowrap; transition: background .15s, border-color .15s, filter .15s;
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  }
+  .pd-btn.sm { height: 32px; padding: 0 13px; font-size: 0.8rem; border-radius: 6px; }
+  .pd-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .pd-btn-primary { background: var(--color-accent, #4a90e2) !important; border: 1px solid var(--color-accent, #4a90e2) !important; color: #fff !important; }
+  .pd-btn-primary:hover:not(:disabled) { filter: brightness(1.08); }
+  .pd-btn-secondary { background: var(--color-surface, rgba(255,255,255,0.04)) !important; border: 1px solid var(--color-border, #ddd) !important; color: var(--color-text-primary, #333) !important; }
+  .pd-btn-secondary:hover:not(:disabled) { background: var(--color-surface-muted, rgba(255,255,255,0.08)) !important; }
 
-  .msg { font-size: 0.82rem; padding: 9px 11px; border-radius: 8px; }
-  .msg.error { color: var(--red); background: rgba(239,68,68,0.12); }
-  .msg.success { color: var(--green); background: rgba(34,197,94,0.12); }
-  .hidden { display: none !important; }
+  .pd-fw-info { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .pd-fw-versions { font-size: 0.85rem; color: var(--color-text-secondary, #94a3b8); }
+  .pd-fw-versions b { color: var(--color-text-primary, #e5e7eb); font-weight: 600; font-variant-numeric: tabular-nums; }
+  .pd-fw-actions { display: flex; gap: 8px; flex-wrap: nowrap; }
+  .pd-link { align-self: flex-start; background: none !important; border: none !important; padding: 0 !important; height: auto; cursor: pointer; color: var(--color-accent, #4a90e2) !important; font-size: 0.82rem; font-weight: 500; }
+  .pd-link:hover { text-decoration: underline; }
+
+  .pd-progress { height: 6px; border-radius: 3px; background: var(--color-surface-muted, rgba(255,255,255,0.08)); overflow: hidden; }
+  .pd-progress > div { height: 100%; width: 0%; background: var(--color-accent, #4a90e2); transition: width .25s ease; }
+  .pd-progress-label { display: flex; align-items: center; justify-content: space-between; margin-top: 6px; font-size: 0.78rem; color: var(--color-text-secondary, #666); }
+
+  .pd-msg { font-size: 0.82rem; padding: 9px 11px; border-radius: 8px; }
+  .pd-msg.error { color: #ef4444; background: rgba(239,68,68,0.12); }
+  .pd-msg.success { color: #22c55e; background: rgba(34,197,94,0.12); }
 </style>
 </head>
 <body>
-<div class="content">
+<div class="pd-dialog">
 
   <!-- Status -->
-  <div id="statusCard" class="status-card">
-    <div class="status-dot"></div>
-    <div class="status-main">
-      <div class="status-title" id="statusTitle">Checking…</div>
-      <div class="status-sub" id="statusSub"></div>
+  <div id="statusCard" class="pd-status-card">
+    <div class="pd-status-icon">
+      <svg viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="5" y="1" width="18" height="26" rx="4" fill="#2d3748" stroke="#4a5568" stroke-width="1"/>
+        <rect x="8" y="4" width="12" height="6" rx="1.5" fill="#0d9488" stroke="#14b8a6" stroke-width="0.5"/>
+        <line x1="9.5" y1="6" x2="15" y2="6" stroke="#5eead4" stroke-width="1" stroke-linecap="round"/>
+        <line x1="9.5" y1="8" x2="13" y2="8" stroke="#5eead4" stroke-width="1" stroke-linecap="round"/>
+        <circle cx="14" cy="18" r="5.5" fill="#718096" stroke="#a0aec0" stroke-width="1"/>
+        <circle cx="14" cy="18" r="2.5" fill="#4a5568" stroke="#718096" stroke-width="0.5"/>
+        <circle cx="14" cy="13.5" r="1" fill="#f59e0b"/>
+        <rect x="6" y="11" width="2.5" height="2" rx="0.5" fill="#f59e0b"/>
+        <rect x="19.5" y="11" width="2.5" height="2" rx="0.5" fill="#f59e0b"/>
+      </svg>
     </div>
-    <div class="status-badge" id="statusBadge"></div>
+    <div class="pd-status-body">
+      <div class="pd-status-title" id="statusTitle">Checking…</div>
+      <div class="pd-status-sub" id="statusSub"></div>
+    </div>
+    <div id="statusBadge" class="pd-status-badge pd-hidden"><span class="pd-pulse"></span><span id="statusBadgeText"></span></div>
   </div>
 
   <!-- Activation -->
-  <section class="block" id="activationSection">
-    <div class="block-title">Activation</div>
-    <p id="notConnectedNote" class="hint hidden">Connect the pendant to activate or update it.</p>
-
-    <div id="activateBlock" class="hidden" style="display:flex; flex-direction:column; gap:12px;">
-      <p class="hint">Enter the Installation ID that came with your pendant.</p>
-      <div class="row">
-        <input id="installationId" class="text" type="text" placeholder="Installation ID" autocomplete="off">
-        <button id="activateBtn" class="btn primary">Activate</button>
+  <div class="pd-card">
+    <div class="pd-card-header">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>
+      <span class="pd-card-title">Activation</span>
+      <span id="licensePill" class="pd-license pd-license--warn"><span class="pd-license-dot"></span><span id="licenseText">Not activated</span></span>
+    </div>
+    <div class="pd-card-body">
+      <p id="notConnectedNote" class="pd-hint pd-hidden">Connect the pendant to activate it.</p>
+      <div id="activateBlock" class="pd-hidden" style="display:flex; flex-direction:column; gap:12px;">
+        <p class="pd-hint">Enter the Installation ID that came with your pendant.</p>
+        <div class="pd-row">
+          <input id="installationId" class="pd-input" type="text" placeholder="Installation ID" autocomplete="off">
+          <button id="activateBtn" class="pd-btn pd-btn-primary">Activate</button>
+        </div>
       </div>
+      <div id="activationMsg" class="pd-msg pd-hidden"></div>
     </div>
-
-    <div id="licensedBlock" class="hidden licensed-row">
-      <span class="pill green">✓ Licensed</span>
-      <button id="deactivateBtn" class="btn danger sm">Deactivate</button>
-    </div>
-
-    <div id="activationMsg" class="msg hidden"></div>
-  </section>
+  </div>
 
   <!-- Firmware -->
-  <section class="block" id="firmwareSection">
-    <div class="block-title">Firmware</div>
-
-    <div id="fwIdle" style="display:flex; flex-direction:column; gap:12px;">
-      <div class="fw-head">
-        <div>
-          <div class="fw-current">Current <b id="fwCurrent">—</b></div>
-          <div class="fw-latest" id="fwLatest"></div>
-        </div>
-        <button id="checkBtn" class="btn ghost sm">Check for updates</button>
-      </div>
-
-      <button id="updateBtn" class="btn primary full hidden">Update to <span id="fwUpdateVer"></span></button>
-
-      <button id="flashToggle" class="link-btn">Flash from file…</button>
-      <div id="flashPanel" class="flash-panel hidden">
-        <input id="fwFile" type="file" accept=".bin" class="text">
-        <p id="otaNote" class="hint hidden">Firmware update needs the pendant connected directly by USB cable.</p>
-        <div class="row end">
-          <button id="flashFileBtn" class="btn ghost sm" disabled>Flash file</button>
-        </div>
-      </div>
+  <div class="pd-card">
+    <div class="pd-card-header">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      <span class="pd-card-title">Firmware Update</span>
     </div>
-
-    <div id="fwProgressBlock" class="hidden" style="display:flex; flex-direction:column; gap:10px;">
-      <div class="hint" id="fwStatusText">Starting…</div>
-      <div class="progress"><div id="fwBar"></div></div>
-      <div class="row end">
-        <button id="fwCancelBtn" class="btn danger sm">Cancel</button>
+    <div class="pd-card-body">
+      <div id="fwIdle" style="display:flex; flex-direction:column; gap:12px;">
+        <div class="pd-fw-info">
+          <div class="pd-fw-versions">Current <b id="fwCurrent">—</b><span id="fwLatest"></span></div>
+          <div class="pd-fw-actions">
+            <button id="checkBtn" class="pd-btn pd-btn-secondary sm">Check for updates</button>
+            <button id="updateBtn" class="pd-btn pd-btn-primary sm pd-hidden">Update to <span id="fwUpdateVer"></span></button>
+          </div>
+        </div>
+        <button id="flashToggle" class="pd-link">Flash from file…</button>
+        <div id="flashPanel" class="pd-hidden" style="display:flex; flex-direction:column; gap:10px;">
+          <input id="fwFile" type="file" accept=".bin" class="pd-input">
+          <p id="otaNote" class="pd-hint pd-hidden">Firmware update needs the pendant connected directly by USB cable.</p>
+          <div class="pd-row" style="justify-content:flex-end;">
+            <button id="flashFileBtn" class="pd-btn pd-btn-secondary sm" disabled>Flash file</button>
+          </div>
+        </div>
       </div>
-    </div>
 
-    <div id="fwMsg" class="msg hidden"></div>
-  </section>
+      <div id="fwProgressBlock" class="pd-hidden" style="display:flex; flex-direction:column; gap:4px;">
+        <div class="pd-progress"><div id="fwBar"></div></div>
+        <div class="pd-progress-label">
+          <span id="fwStatusText">Starting…</span>
+          <button id="fwCancelBtn" class="pd-link">Cancel</button>
+        </div>
+      </div>
+
+      <div id="fwMsg" class="pd-msg pd-hidden"></div>
+    </div>
+  </div>
 
 </div>
 
@@ -178,16 +214,15 @@
   })();
 
   var $ = function (id) { return document.getElementById(id); };
-  function show(el, on) { el.classList[on ? 'remove' : 'add']('hidden'); }
+  function show(el, on) { el.classList[on ? 'remove' : 'add']('pd-hidden'); }
   function setMsg(el, text, kind) {
     if (!text) { show(el, false); return; }
-    el.textContent = text; el.className = 'msg ' + (kind || 'error'); show(el, true);
+    el.textContent = text; el.className = 'pd-msg ' + (kind || 'error'); show(el, true);
   }
 
   var state = { connected: false, licensed: false, otaReady: false, version: '', updating: false };
   var statusTimer = null;
 
-  // ---------- Status ----------
   async function loadStatus() {
     try {
       var r = await fetch(BASE_URL + '/api/pendant/status');
@@ -203,27 +238,33 @@
   }
 
   function renderStatus(d) {
-    var card = $('statusCard'), title = $('statusTitle'), sub = $('statusSub'), badge = $('statusBadge');
+    var card = $('statusCard'), title = $('statusTitle'), sub = $('statusSub'),
+        badge = $('statusBadge'), badgeText = $('statusBadgeText');
     if (state.connected) {
       var kind = d.activeConnectionType === 'espnow' ? 'Wireless' : 'USB';
-      card.className = 'status-card ok';
+      card.className = 'pd-status-card connected';
       title.textContent = 'Pendant connected';
       sub.textContent = kind + (state.version ? ' · v' + state.version : '');
-      badge.textContent = kind;
+      badgeText.textContent = kind; show(badge, true);
     } else {
-      card.className = 'status-card';
+      card.className = 'pd-status-card';
       title.textContent = 'Pendant not connected';
       sub.textContent = 'Plug in the pendant or pair it in the Wireless USB dialog';
-      badge.textContent = '';
+      show(badge, false);
     }
+
+    // License pill in the Activation header
+    var pill = $('licensePill'), pillText = $('licenseText');
+    if (!state.connected) { pill.className = 'pd-license'; pillText.textContent = 'No pendant'; }
+    else if (state.licensed) { pill.className = 'pd-license pd-license--ok'; pillText.textContent = 'Activated'; }
+    else { pill.className = 'pd-license pd-license--warn'; pillText.textContent = 'Not activated'; }
+
     show($('notConnectedNote'), !state.connected);
     show($('activateBlock'), state.connected && !state.licensed);
-    show($('licensedBlock'), state.connected && state.licensed);
     $('fwCurrent').textContent = state.version || '—';
     show($('otaNote'), state.connected && !state.otaReady);
   }
 
-  // ---------- Activation ----------
   $('activateBtn').addEventListener('click', async function () {
     var id = $('installationId').value.trim();
     if (!id) return;
@@ -242,18 +283,6 @@
     finally { btn.disabled = false; btn.textContent = 'Activate'; }
   });
 
-  $('deactivateBtn').addEventListener('click', async function () {
-    var btn = $('deactivateBtn');
-    btn.disabled = true; btn.textContent = 'Deactivating…'; setMsg($('activationMsg'), '');
-    try {
-      var r = await fetch(BASE_URL + '/api/pendant/deactivate-usb', { method: 'POST' });
-      if (!r.ok) { var e = await r.json().catch(function(){return{};}); throw new Error(e.error || e.message || 'Deactivation failed'); }
-      await loadStatus();
-    } catch (e) { setMsg($('activationMsg'), e.message || 'Deactivation failed', 'error'); }
-    finally { btn.disabled = false; btn.textContent = 'Deactivate'; }
-  });
-
-  // ---------- Firmware ----------
   $('checkBtn').addEventListener('click', async function () {
     var btn = $('checkBtn');
     btn.disabled = true; btn.textContent = 'Checking…'; setMsg($('fwMsg'), '');
@@ -263,11 +292,11 @@
       var info = await r.json();
       $('fwCurrent').textContent = info.currentVersion || state.version || '—';
       if (info.updateAvailable && info.latestVersion) {
-        $('fwLatest').textContent = 'Latest v' + info.latestVersion + ' available';
+        $('fwLatest').textContent = ' · latest v' + info.latestVersion;
         $('fwUpdateVer').textContent = 'v' + info.latestVersion;
         show($('updateBtn'), true);
       } else {
-        $('fwLatest').textContent = 'Up to date';
+        $('fwLatest').textContent = ' · up to date';
         show($('updateBtn'), false);
       }
     } catch (e) { setMsg($('fwMsg'), e.message || 'Could not check for updates', 'error'); }
@@ -275,13 +304,8 @@
   });
 
   $('updateBtn').addEventListener('click', function () { runFirmware('/api/pendant/firmware/update', null); });
-
-  $('flashToggle').addEventListener('click', function () {
-    var p = $('flashPanel'); p.classList.toggle('hidden');
-  });
-  $('fwFile').addEventListener('change', function () {
-    $('flashFileBtn').disabled = !($('fwFile').files && $('fwFile').files[0]);
-  });
+  $('flashToggle').addEventListener('click', function () { $('flashPanel').classList.toggle('pd-hidden'); });
+  $('fwFile').addEventListener('change', function () { $('flashFileBtn').disabled = !($('fwFile').files && $('fwFile').files[0]); });
   $('flashFileBtn').addEventListener('click', async function () {
     var f = $('fwFile').files && $('fwFile').files[0];
     if (!f) return;
@@ -299,10 +323,7 @@
     show($('fwIdle'), false); show($('fwProgressBlock'), true);
     $('fwBar').style.width = '0%'; $('fwStatusText').textContent = 'Starting…'; setMsg($('fwMsg'), '');
   }
-  function endFirmware() {
-    state.updating = false;
-    show($('fwProgressBlock'), false); show($('fwIdle'), true);
-  }
+  function endFirmware() { state.updating = false; show($('fwProgressBlock'), false); show($('fwIdle'), true); }
 
   async function runFirmware(path, body) {
     beginFirmware();
@@ -336,7 +357,6 @@
     } catch (e) { endFirmware(); setMsg($('fwMsg'), e.message || 'Firmware update failed', 'error'); }
   }
 
-  // ---------- Init ----------
   $('installationId').addEventListener('keyup', function (e) { if (e.key === 'Enter') $('activateBtn').click(); });
   loadStatus();
   statusTimer = setInterval(function () { if (!state.updating) loadStatus(); }, 3000);

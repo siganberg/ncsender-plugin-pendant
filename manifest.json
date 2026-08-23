@@ -1,7 +1,7 @@
 {
   "id": "com.ncsender.pendant",
   "name": "Pendant",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "minAppVersion": "0.3.111",
   "author": "FrancisCreation",
   "description": "Wireless pendant activation and firmware updates. Pairing lives in the core Wireless USB dialog.",

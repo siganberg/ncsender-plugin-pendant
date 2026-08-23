@@ -238,14 +238,26 @@
       show(badge, false);
     }
 
-    // License pill (firmware header)
+    // License pill (firmware header).
+    // Version is the metadata-arrived signal — the server reports the
+    // pendant as connected the moment the handshake completes, but
+    // Licensed/Version stay at their defaults (false / empty) until the
+    // pendant sends its metadata frame a moment later. Showing "Not
+    // activated" during that brief window (and popping the activation
+    // card on an already-licensed pendant) is what caused the confusing
+    // dialog on a wireless-reconnect. Treat empty version as "unknown"
+    // instead of "not licensed".
     var pill = $('licensePill'), pillText = $('licenseText');
+    var metadataReady = !!state.version;
     if (!state.connected) { pill.className = 'pd-license'; pillText.textContent = 'No pendant'; }
+    else if (!metadataReady) { pill.className = 'pd-license'; pillText.textContent = 'Checking…'; }
     else if (state.licensed) { pill.className = 'pd-license pd-license--ok'; pillText.textContent = 'Activated'; }
     else { pill.className = 'pd-license pd-license--warn'; pillText.textContent = 'Not activated'; }
 
-    // Activation card only when there's something to do
-    show($('activationCard'), state.connected && !state.licensed);
+    // Activation card only when we know for sure the pendant is unlicensed.
+    // Wait for metadata so a freshly-reconnected licensed pendant doesn't
+    // prompt the user to re-enter an Installation ID.
+    show($('activationCard'), state.connected && metadataReady && !state.licensed);
 
     // Firmware status line + actions
     if (state.updating) return; // don't disturb progress view
@@ -257,12 +269,15 @@
     if (!state.connected) {
       cls = 'pd-fw-status muted';
       html = 'Connect the pendant to check for updates.';
+    } else if (!metadataReady) {
+      cls = 'pd-fw-status muted';
+      html = 'Reading pendant version…';
     } else if (state.updateAvail && state.latest) {
       cls = 'pd-fw-status';
       html = 'Current <b>v' + state.version + '</b> · <span class="avail">v' + state.latest + ' available</span>';
     } else {
       cls = 'pd-fw-status';
-      html = 'Current <b>v' + (state.version || '—') + '</b>' + (state.checked ? ' · up to date' : '');
+      html = 'Current <b>v' + state.version + '</b>' + (state.checked ? ' · up to date' : '');
     }
     // Only touch the DOM when the content actually changes — rewriting innerHTML
     // on every 3s poll rebuilds the nodes and makes the text flicker.
@@ -324,6 +339,11 @@
 
   async function runFirmware(path, body) {
     beginFirmware();
+    // Track the last SSE 'error' event so the outer catch can prefer the
+    // server's real reason ("End failed: MD5 Failed…") over the browser's
+    // generic "network error" when the fetch reader trips on the response
+    // close that immediately follows the error line.
+    var sseError = null;
     try {
       var opts = body
         ? { method: 'POST', headers: { 'Content-Type': 'application/octet-stream' }, body: body }
@@ -348,11 +368,21 @@
             state.updateAvail = false; endFirmware();
             setMsg($('fwMsg'), 'Firmware updated' + (ev.version ? ' to v' + ev.version : '') + '. The pendant is rebooting.', 'success');
             return;
-          } else if (ev.type === 'error') { throw new Error(ev.message || 'Firmware update failed'); }
+          } else if (ev.type === 'error') {
+            sseError = ev.message || 'Firmware update failed';
+            throw new Error(sseError);
+          }
         }
       }
       endFirmware();
-    } catch (e) { endFirmware(); setMsg($('fwMsg'), e.message || 'Firmware update failed', 'error'); }
+    } catch (e) {
+      endFirmware();
+      // Prefer the server's SSE error over whatever the reader threw
+      // (fetch/TextDecoder throw "network error" or "Failed to fetch" when
+      // the response body closes right after the error line — that noise
+      // hides the real reason).
+      setMsg($('fwMsg'), sseError || e.message || 'Firmware update failed', 'error');
+    }
   }
 
   loadStatus();
